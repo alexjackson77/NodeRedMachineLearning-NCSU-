@@ -1,0 +1,52 @@
+function T = fnc_loadHET(fileName)
+
+T = readtable(fileName);
+switch(size(T,2))
+    case 4
+        T.Properties.VariableNames={'AccX','AccY','AccZ','time'};
+    case 5
+        T.Properties.VariableNames={'AccX','AccY','AccZ','Counter','time'};
+end
+t = T.time;
+if(isa(t(1),'duration'))
+    t = seconds(t);
+end
+
+T.time = (t - t(1))/1000;
+
+-----------------------------------------------------------------------------------
+
+function T = fnc_loadShimmer(fileName)
+
+% Just getting variable names
+T = readtable(fileName);
+names = T.Properties.VariableNames;
+
+% Getting data
+T = readtable(fileName,'headerlines',2);
+
+% Renaming variables
+for i = 1:length(names)
+    tmp = strsplit(names{i},'_');
+    if(length(tmp)<2)
+        if(i==length(names))
+            T = removevars(T,names{i});
+        end
+        continue;
+    end
+    colName = names{i};
+    switch(tmp{2})
+        case 'Timestamp'
+            colName = 'time';
+        case 'Accel'
+            switch(tmp{3})
+                case 'LN'
+                    colName = ['Acc' tmp{4}];
+                case 'WR'
+                    colName = ['AccWR' tmp{4}];
+            end
+    end
+    T.Properties.VariableNames{i} = colName;
+end
+
+T.time = (T.time - T.time(1))/1000;
