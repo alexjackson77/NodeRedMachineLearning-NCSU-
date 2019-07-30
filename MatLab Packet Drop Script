@@ -1,0 +1,64 @@
+% This script is used to analyze the data from the arduino-based IMu sensor
+% device.
+%
+% Author: Edgar Lobaton
+% Date Created: June 19, 2019
+
+% Loading data
+sel = 1;
+switch(sel)
+    case 1
+        D = csvread('HET7-2wifi.csv');
+        D(:,5) = round((D(:,4)-D(1,4))/10);
+        D = D(1:2:end,:);
+   % case 2
+    %    D = csvread('imuData2.csv');
+   % case 3
+    %    D = csvread('imuData3.csv');
+end
+
+% Removing rows that have repeated ID
+keepFlag = ones(1,size(D,1));
+for i = 2:size(D,1)
+    if(D(i,5)==D(i-1,5))
+        keepFlag(i) = 0;
+    end
+end
+D = D(boolean(keepFlag),:);
+
+% Extracting time in seconds and values from the device
+t = (D(:,4)-D(1,4))/1000;
+id = D(:,5);
+acc = D(:,[1 2 3]);
+
+%% PLOTTING RESULTS OF ANALYSIS
+
+figure(sel);
+
+% Analyzing package drop using the ids
+%subplot(3,2,1); 
+v = diff(id);
+%hist(v,[4 6 8 10 12 14]);
+%ax = axis; axis([0 8 ax(3:4)]);
+%xlabel('Number of Packets Dropped');
+subplot(3,2,1); plot(id(1:end-1),v,'.');
+axis([700 900 0 65]);
+xlabel('Packet ID'); ylabel('# Dropped');
+
+% Summaries of package drop
+Np = (id(end)-id(1)+1);
+fprintf('Drop Gaps Over | Number of Packets: %d | %d\n',nnz(v>1),Np);
+fprintf('Percentage of Dropped Packets: %d %%\n',round(100*(1-...
+    length(id)/Np)));
+
+% Analyzing package drop using the time stamps
+%subplot(3,2,3); v = diff(t);
+%hist(v,0.01*[0 1 2 3 4 5]);
+%ax = axis; axis([0 0.08 ax(3:4)]);
+%xlabel('\Delta t');
+%subplot(3,2,4); plot(id(1:end-1),v,'.');
+%xlabel('id'); ylabel('\Delta t');
+
+% Plotting IMU data
+subplot(3,1,2); plot(id,acc,'.-');
+axis([700 900 -1300 1000]);
