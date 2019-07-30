@@ -1,0 +1,96 @@
+% Script illustrating how to load the HET and Shimmer data
+%
+% Author: Edgar Lobaton Editor: Alex Jackson
+% Date Created: 06/27/2019
+
+%How this works: 
+%Change the csv file names to match the files you want to read. Make sure
+%they are in the same folder as this .m file
+%Run this script. The X-axis data will appear for the HET and Shimmer on
+%separate graphs. 
+
+HET = fnc_loadHET('HET7-2wifi.csv');
+Shimmer = fnc_loadShimmer('SHIMMER7-2.csv');
+
+%% PLOTTING DATA
+%t = 1:size(HET,1);
+tHET = HET.time;
+mHET= sqrt(HET.AccX.^2 + HET.AccY.^2 + HET.AccZ.^2);
+pHET = mHET/100.10197162129779 ;
+
+%Convert to Shimmer units
+%pHET = mHET*0.10197162129779;
+
+h(1) = subplot(2,1,1); plot(tHET,pHET);
+%xlabel('Time'); 
+%ylabel('Acceleration'); 
+%title('HET');
+%legend('X Data', 'Y Data', 'Z Data');
+
+tSHIM = Shimmer.time;
+mSHIM = sqrt(Shimmer.AccX.^2 + Shimmer.AccY.^2 + Shimmer.AccZ.^2);
+
+h(2) = subplot(2,1,2); plot(tSHIM,mSHIM);
+%xlabel('Time'); 
+%ylabel('Acceleration'); 
+%title('Shimmer');
+axis([0 150 0 25]);
+%legend('X Data', 'Y Data', 'Z Data');
+
+linkaxes(h, 'x');
+
+%pick points at beginning and end of data set
+%pick HET start, then SHIM start, then HET end, then SHIM end
+
+pause;
+[xx, yy] = ginput(2);
+pause;
+[xx2, yy2] = ginput(2);
+
+%xalign1 = find(xx(1));
+%distance = abs(tHET - xx(1));
+%figure(2)
+%plot(distance);
+%[mv, mi] = min(distance);
+%xalign2 = find(xx(2));
+%yalign1 = find(yy(1));
+%yalign2 = find(yy(2));
+
+%Find min and max draw lines where the data collection is to start and end
+
+minH = min(pHET);
+maxH = max(pHET);
+minS = min(mSHIM);
+maxS = max(mSHIM);
+
+%HET Start
+subplot(2,1,1); 
+hold on;
+plot([xx(1), xx(1)],[minH, maxH], 'r--');
+hold off;
+
+%Shimmer Start
+subplot(2,1,2); 
+hold on;
+plot([xx(2), xx(2)], [minS, maxS], 'r--');
+hold off;
+
+%HET End
+subplot(2,1,1); 
+hold on;
+plot([xx2(1), xx2(1)], [minH, maxH], 'r--');
+hold off;
+
+%Shimmer End
+subplot(2,1,2); 
+hold on;
+plot([xx2(2), xx2(2)], [minS, maxS], 'r--');
+hold off;
+
+% Assuming that the xxStart contains the matching coordinates of the first sync
+% spikes, where the first entry is for the HET and the second for the shimmer.
+% Also, xxEnd has the corresponding entries for the final sync spikes. Then, the
+% following expression scales the time in the HET to match those in the Shimmer.
+
+slope = (xx2(2)-xx(2))/(xx2(1)-xx(1));
+tHETSync = (tHET-xx(1))*slope + xx(2);
